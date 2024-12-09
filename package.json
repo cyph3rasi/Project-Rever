@@ -8,9 +8,7 @@
     "dev": "nodemon src/app.js",
     "client-install": "cd src/client && npm install",
     "client-build": "cd src/client && npm run build",
-    "client-dev": "cd src/client && PORT=3005 npm start",
-    "setup": "npm install && npm run client-install && npm run client-build",
-    "dev-all": "concurrently \"npm run dev\" \"npm run client-dev\""
+    "setup": "npm install && npm run client-install && npm run client-build"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -20,8 +18,7 @@
     "ethers": "^6.9.0",
     "helmet": "^7.1.0",
     "morgan": "^1.10.0",
-    "@avalabs/avalanchejs": "^3.17.0",
-    "concurrently": "^8.2.2"
+    "@avalabs/avalanchejs": "^3.17.0"
   },
   "devDependencies": {
     "jest": "^29.7.0",
