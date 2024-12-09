@@ -4,11 +4,14 @@ let avalanche;
 
 const setupAvalancheNetwork = () => {
   try {
-    avalanche = new Avalanche(
-      process.env.AVALANCHE_API_URL,
-      parseInt(process.env.AVALANCHE_NETWORK_ID),
-      process.env.AVALANCHE_CHAIN_ID
-    );
+    const protocol = 'https';
+    const ip = 'api.avax-test.network';
+    const port = 443;
+    const networkID = parseInt(process.env.AVALANCHE_NETWORK_ID || '5');
+    const chainID = process.env.AVALANCHE_CHAIN_ID || '43113';
+
+    avalanche = new Avalanche(ip, port, protocol, networkID, chainID);
+    
     console.log('Avalanche network connection established');
     return avalanche;
   } catch (error) {
