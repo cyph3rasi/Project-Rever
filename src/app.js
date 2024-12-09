@@ -11,10 +11,6 @@ const routes = require('./routes');
 const app = express();
 
 // Middleware
-app.use(cors({
-  origin: ['http://localhost:3005', 'http://localhost:3334'],  // Allow both ports
-  credentials: true
-}));
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
@@ -25,15 +21,14 @@ setupAvalancheNetwork();
 // API Routes
 app.use('/api', routes);
 
-// Serve static files from the React build directory in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'client/build')));
-  
-  // Handle React routing, return all requests to React app
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
-  });
-}
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, 'client/build')));
+
+// The "catch-all" handler: for any request that doesn't
+// match an API route, send back the React app's index.html file.
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
