@@ -12,25 +12,20 @@ function App() {
       setError('');
       setStatus('Connecting wallet...');
 
-      // Check if MetaMask is installed
       if (!window.ethereum) {
         throw new Error('Please install MetaMask to use this feature');
       }
 
-      // Request account access
       const provider = new ethers.BrowserProvider(window.ethereum);
       const accounts = await provider.send('eth_requestAccounts', []);
       const address = accounts[0];
       const signer = await provider.getSigner();
 
-      // Connect wallet to backend
       const response = await axios.post('/api/auth/connect-wallet', { address });
       const { messageToSign } = response.data;
 
-      // Request signature
       const signature = await signer.signMessage(messageToSign);
 
-      // Verify signature
       const verifyResponse = await axios.post('/api/auth/verify-signature', {
         address,
         signature,
