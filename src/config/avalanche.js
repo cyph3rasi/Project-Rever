@@ -1,4 +1,4 @@
-const { Avalanche } = require('@avalabs/avalanchejs');
+const { Avalanche } = require('avalanche');
 
 let avalanche;
 
