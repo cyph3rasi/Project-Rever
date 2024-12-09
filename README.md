@@ -19,6 +19,7 @@ Current Status: **Initial Development - Phase 1**
   - Wallet connection UI
   - Basic error handling
   - Responsive design with Tailwind CSS
+- IPFS integration using Pinata for decentralized storage
 
 ### In Progress
 - Feed page implementation
@@ -29,14 +30,13 @@ Current Status: **Initial Development - Phase 1**
 ### Next Steps
 1. Complete feed page development
 2. Implement token mechanics and smart contracts
-3. Add IPFS integration for content storage
-4. Build out post creation and interaction features
-5. Develop user profile system
+3. Build out post creation and interaction features
+4. Develop user profile system
 
 ## Features (Planned)
 
 - Wallet-based authentication ✓ (Basic Implementation)
-- Decentralized content creation and storage
+- Decentralized content creation and storage ✓ (Basic Implementation)
 - Token-based engagement
 - NFT integration
 - DAO governance
@@ -51,10 +51,10 @@ Current Status: **Initial Development - Phase 1**
 - Styling: Tailwind CSS with shadcn/ui components
 - Blockchain: Avalanche (Fuji Testnet)
 - Authentication: MetaMask wallet integration
+- Storage: IPFS via Pinata
 
 ### To Be Implemented
 - Smart Contracts: Solidity
-- Storage: IPFS
 - Database: Hybrid approach (on-chain metadata, off-chain indexing)
 
 ## Getting Started
@@ -65,6 +65,7 @@ Current Status: **Initial Development - Phase 1**
 - npm or yarn
 - MetaMask wallet
 - MetaMask configured for Avalanche Fuji Testnet
+- Pinata account and API keys
 
 ### Installation
 
@@ -93,6 +94,20 @@ cp .env.example .env
 ```
 
 5. Update the environment variables in `.env` with your configuration
+
+### Setting up Pinata
+
+1. Create a Pinata account at https://app.pinata.cloud/
+2. Generate API keys:
+   - Go to Dashboard > API Keys
+   - Click "New Key"
+   - Enable the necessary permissions (minimally: pinFileToIPFS, pinJSONToIPFS)
+   - Copy the API Key and API Secret
+3. Add your Pinata credentials to the `.env` file:
+```env
+PINATA_API_KEY=your_api_key_here
+PINATA_API_SECRET=your_api_secret_here
+```
 
 ### Development
 
@@ -132,7 +147,8 @@ npm run client-build
 ├── src/
 │   ├── app.js           # Server entry point
 │   ├── config/          # Configuration files
-│   │   └── avalanche.js # Avalanche network setup
+│   │   ├── avalanche.js # Avalanche network setup
+│   │   └── ipfs.js      # Pinata IPFS configuration
 │   ├── controllers/     # Route controllers
 │   ├── middleware/      # Express middleware
 │   ├── routes/          # API routes
@@ -175,6 +191,12 @@ npm run client-build
 - GET `/api/tokens/balance` - Get user's token balance
 - POST `/api/tokens/tip` - Send tip to content creator
 - GET `/api/tokens/rewards` - Get available rewards
+
+### Storage
+- POST `/api/storage/upload` - Upload file to IPFS
+- POST `/api/storage/upload-json` - Upload JSON to IPFS
+- GET `/api/storage/:cid` - Get IPFS content metadata
+- DELETE `/api/storage/:cid` - Unpin content from IPFS
 
 ## Contributing
 
