@@ -1,47 +1,32 @@
-const { create } = require('ipfs-http-client');
+const { Web3Storage } = require('web3.storage');
 
-// Configure IPFS client
-const setupIPFSClient = () => {
+// Configure Web3.Storage client
+const setupStorageClient = () => {
   try {
-    // Using Infura's IPFS gateway
-    const projectId = process.env.INFURA_IPFS_PROJECT_ID;
-    const projectSecret = process.env.INFURA_IPFS_PROJECT_SECRET;
+    const token = process.env.WEB3_STORAGE_TOKEN;
     
-    if (!projectId || !projectSecret) {
-      throw new Error('IPFS credentials not configured');
+    if (!token) {
+      throw new Error('Web3.Storage token not configured');
     }
 
-    const auth = 'Basic ' + Buffer.from(projectId + ':' + projectSecret).toString('base64');
-
-    const ipfs = create({
-      host: 'ipfs.infura.io',
-      port: 5001,
-      protocol: 'https',
-      headers: {
-        authorization: auth
-      }
-    });
-
-    return ipfs;
+    return new Web3Storage({ token });
   } catch (error) {
-    console.error('IPFS initialization error:', error);
+    console.error('Web3.Storage initialization error:', error);
     throw error;
   }
 };
 
-// Utility function to upload file to IPFS
+// Utility function to upload file to IPFS via Web3.Storage
 const uploadToIPFS = async (file) => {
   try {
-    const ipfs = setupIPFSClient();
+    const client = setupStorageClient();
     
-    // Add the file to IPFS
-    const result = await ipfs.add(file);
+    // Upload the file
+    const cid = await client.put([file]);
     
     return {
-      cid: result.cid.toString(),
-      size: result.size,
-      // Construct gateway URL for easy access
-      url: `https://ipfs.io/ipfs/${result.cid.toString()}`
+      cid: cid,
+      url: `https://${cid}.ipfs.dweb.link/${file.name}`
     };
   } catch (error) {
     console.error('IPFS upload error:', error);
@@ -52,18 +37,20 @@ const uploadToIPFS = async (file) => {
 // Utility function to upload JSON metadata to IPFS
 const uploadJSONToIPFS = async (jsonData) => {
   try {
-    const ipfs = setupIPFSClient();
+    const client = setupStorageClient();
     
-    // Convert JSON to Buffer
-    const buffer = Buffer.from(JSON.stringify(jsonData));
+    // Create a file from the JSON data
+    const blob = new Blob([JSON.stringify(jsonData)], { type: 'application/json' });
+    const files = [
+      new File([blob], 'metadata.json')
+    ];
     
-    // Add the JSON to IPFS
-    const result = await ipfs.add(buffer);
+    // Upload the file
+    const cid = await client.put(files);
     
     return {
-      cid: result.cid.toString(),
-      size: result.size,
-      url: `https://ipfs.io/ipfs/${result.cid.toString()}`
+      cid: cid,
+      url: `https://${cid}.ipfs.dweb.link/metadata.json`
     };
   } catch (error) {
     console.error('IPFS JSON upload error:', error);
@@ -74,18 +61,17 @@ const uploadJSONToIPFS = async (jsonData) => {
 // Utility function to retrieve content from IPFS
 const getFromIPFS = async (cid) => {
   try {
-    const ipfs = setupIPFSClient();
-    let content = [];
+    const client = setupStorageClient();
     
-    // Get the content from IPFS
-    for await (const chunk of ipfs.cat(cid)) {
-      content.push(chunk);
+    // Get the data from IPFS
+    const res = await client.get(cid);
+    if (!res.ok) {
+      throw new Error(`Failed to get ${cid}`);
     }
     
-    // Combine chunks and convert to buffer
-    const buffer = Buffer.concat(content);
-    
-    return buffer;
+    // Get all the files in the response
+    const files = await res.files();
+    return files;
   } catch (error) {
     console.error('IPFS retrieval error:', error);
     throw error;
@@ -93,7 +79,7 @@ const getFromIPFS = async (cid) => {
 };
 
 module.exports = {
-  setupIPFSClient,
+  setupStorageClient,
   uploadToIPFS,
   uploadJSONToIPFS,
   getFromIPFS
