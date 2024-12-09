@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 
 function App() {
-  // Simple auth check - can be enhanced with a proper auth context
+  // Simple auth check
   const isAuthenticated = !!localStorage.getItem('wallet_address');
 
   return (
@@ -12,7 +12,7 @@ function App() {
         {/* Public routes */}
         <Route 
           path="/" 
-          element={isAuthenticated ? <Navigate to="/feed" /> : <LandingPage />} 
+          element={<LandingPage />} 
         />
         
         {/* Protected routes - redirect to landing if not authenticated */}
