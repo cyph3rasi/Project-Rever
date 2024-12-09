@@ -1,32 +1,44 @@
-const { Web3Storage } = require('web3.storage');
+const pinataSDK = require('@pinata/sdk');
 
-// Configure Web3.Storage client
+// Configure Pinata client
 const setupStorageClient = () => {
   try {
-    const token = process.env.WEB3_STORAGE_TOKEN;
+    const apiKey = process.env.PINATA_API_KEY;
+    const apiSecret = process.env.PINATA_API_SECRET;
     
-    if (!token) {
-      throw new Error('Web3.Storage token not configured');
+    if (!apiKey || !apiSecret) {
+      throw new Error('Pinata API credentials not configured');
     }
 
-    return new Web3Storage({ token });
+    return new pinataSDK(apiKey, apiSecret);
   } catch (error) {
-    console.error('Web3.Storage initialization error:', error);
+    console.error('Pinata initialization error:', error);
     throw error;
   }
 };
 
-// Utility function to upload file to IPFS via Web3.Storage
+// Utility function to upload file to IPFS via Pinata
 const uploadToIPFS = async (file) => {
   try {
     const client = setupStorageClient();
     
+    // Create readable stream from file buffer
+    const readableStreamForFile = new Readable();
+    readableStreamForFile.push(file.buffer);
+    readableStreamForFile.push(null);
+
+    const options = {
+      pinataMetadata: {
+        name: file.originalname,
+      }
+    };
+    
     // Upload the file
-    const cid = await client.put([file]);
+    const result = await client.pinFileToIPFS(readableStreamForFile, options);
     
     return {
-      cid: cid,
-      url: `https://${cid}.ipfs.dweb.link/${file.name}`
+      cid: result.IpfsHash,
+      url: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`
     };
   } catch (error) {
     console.error('IPFS upload error:', error);
@@ -39,18 +51,18 @@ const uploadJSONToIPFS = async (jsonData) => {
   try {
     const client = setupStorageClient();
     
-    // Create a file from the JSON data
-    const blob = new Blob([JSON.stringify(jsonData)], { type: 'application/json' });
-    const files = [
-      new File([blob], 'metadata.json')
-    ];
+    const options = {
+      pinataMetadata: {
+        name: 'metadata.json',
+      }
+    };
     
-    // Upload the file
-    const cid = await client.put(files);
+    // Upload the JSON data
+    const result = await client.pinJSONToIPFS(jsonData, options);
     
     return {
-      cid: cid,
-      url: `https://${cid}.ipfs.dweb.link/metadata.json`
+      cid: result.IpfsHash,
+      url: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`
     };
   } catch (error) {
     console.error('IPFS JSON upload error:', error);
@@ -58,22 +70,35 @@ const uploadJSONToIPFS = async (jsonData) => {
   }
 };
 
-// Utility function to retrieve content from IPFS
+// Utility function to retrieve content metadata from IPFS
 const getFromIPFS = async (cid) => {
   try {
     const client = setupStorageClient();
     
-    // Get the data from IPFS
-    const res = await client.get(cid);
-    if (!res.ok) {
-      throw new Error(`Failed to get ${cid}`);
+    // Get the pin data
+    const result = await client.pinList({
+      hashContains: cid
+    });
+
+    if (result.count === 0) {
+      throw new Error(`No content found for CID: ${cid}`);
     }
     
-    // Get all the files in the response
-    const files = await res.files();
-    return files;
+    return result.rows[0];
   } catch (error) {
     console.error('IPFS retrieval error:', error);
+    throw error;
+  }
+};
+
+// Utility function to unpin content from IPFS
+const unpinFromIPFS = async (cid) => {
+  try {
+    const client = setupStorageClient();
+    await client.unpin(cid);
+    return true;
+  } catch (error) {
+    console.error('IPFS unpin error:', error);
     throw error;
   }
 };
@@ -82,5 +107,6 @@ module.exports = {
   setupStorageClient,
   uploadToIPFS,
   uploadJSONToIPFS,
-  getFromIPFS
+  getFromIPFS,
+  unpinFromIPFS
 };
