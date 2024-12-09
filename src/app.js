@@ -50,10 +50,41 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-const PORT = process.env.PORT || 3334;
+// Find an available port
+const findAvailablePort = (startPort) => {
+  return new Promise((resolve, reject) => {
+    const server = require('http').createServer();
+    
+    server.listen(startPort, () => {
+      const { port } = server.address();
+      server.close(() => resolve(port));
+    });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        resolve(findAvailablePort(startPort + 1));
+      } else {
+        reject(err);
+      }
+    });
+  });
+};
+
+// Start server with port fallback
+const startServer = async () => {
+  try {
+    const startPort = process.env.PORT || 3334;
+    const port = await findAvailablePort(startPort);
+    
+    app.listen(port, () => {
+      console.log(`Server running on port ${port}`);
+    });
+  } catch (err) {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 module.exports = app;
