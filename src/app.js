@@ -2,11 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const session = require('express-session');
 const path = require('path');
 require('dotenv').config();
 
 const { setupAvalancheNetwork } = require('./config/avalanche');
 const routes = require('./routes');
+const authRoutes = require('./routes/auth');
 
 const app = express();
 
@@ -15,10 +17,22 @@ app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
 
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { 
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
 // Initialize Avalanche network connection
 setupAvalancheNetwork();
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api', routes);
 
 // Serve static files from the React app
