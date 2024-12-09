@@ -1,6 +1,6 @@
 # Project Rever
 
-A decentralized social network built on the Avalanche blockchain, designed to provide a Twitter-like experience with Web3 features.
+A decentralized social network built on the Avalanche blockchain.
 
 ## State of the Project
 
@@ -14,65 +14,48 @@ Current Status: **Initial Development - Phase 1**
   - Signature verification
   - Basic authentication middleware
 - Initial React frontend
+  - Modern landing page with wallet connection
   - MetaMask integration
   - Wallet connection UI
   - Basic error handling
+  - Responsive design with Tailwind CSS
 
 ### In Progress
+- Feed page implementation
 - Enhanced security measures for wallet connection
 - Token system implementation
-- Smart contract development for core features
-- IPFS integration planning
+- Smart contract development
 
 ### Next Steps
-1. Complete smart contracts for:
-   - Post creation and storage
-   - Token rewards system
-   - Basic engagement features (likes, reposts)
-2. Implement IPFS integration for media storage
-3. Build user profile system with on-chain verification
-4. Develop post creation and interaction frontend
+1. Complete feed page development
+2. Implement token mechanics and smart contracts
+3. Add IPFS integration for content storage
+4. Build out post creation and interaction features
+5. Develop user profile system
 
 ## Features (Planned)
 
-### Core Features
 - Wallet-based authentication ✓ (Basic Implementation)
-- Microblogging functionality
-  - Text posts with metadata on Avalanche
-  - Media storage on IPFS
-  - Threading capability
+- Decentralized content creation and storage
 - Token-based engagement
-  - Native token for rewards
-  - Tipping system
-  - Premium content access
 - NFT integration
-  - Post minting as NFTs
-  - NFT marketplace
 - DAO governance
-  - Community voting
-  - Platform policy management
 - Privacy features
-  - Controlled content visibility
-  - Zero-knowledge proof integration
 - Gamification
-  - Creator leaderboards
-  - Achievement system
 
 ## Tech Stack
 
 ### Current Implementation
 - Backend: Node.js with Express.js
 - Frontend: React with ethers.js
+- Styling: Tailwind CSS with shadcn/ui components
 - Blockchain: Avalanche (Fuji Testnet)
 - Authentication: MetaMask wallet integration
 
 ### To Be Implemented
 - Smart Contracts: Solidity
 - Storage: IPFS
-- Database: Hybrid approach
-  - On-chain: Core post metadata
-  - Off-chain: Performance-critical data
-- Indexing: The Graph (planned)
+- Database: Hybrid approach (on-chain metadata, off-chain indexing)
 
 ## Getting Started
 
@@ -81,7 +64,7 @@ Current Status: **Initial Development - Phase 1**
 - Node.js (v14 or higher)
 - npm or yarn
 - MetaMask wallet
-- Avalanche Fuji Testnet configured in MetaMask
+- MetaMask configured for Avalanche Fuji Testnet
 
 ### Installation
 
@@ -91,28 +74,54 @@ git clone https://github.com/cyph3rasi/Project-Rever.git
 cd Project-Rever
 ```
 
-2. Run the setup script (installs all dependencies and builds the frontend):
+2. Install main project dependencies:
 ```bash
-npm run setup
+npm install
 ```
 
-3. Create environment file:
+3. Install client dependencies and build frontend:
+```bash
+cd src/client
+npm install
+npm run build
+cd ../..
+```
+
+4. Create environment file:
 ```bash
 cp .env.example .env
 ```
 
-4. Update the environment variables in `.env` with your configuration
+5. Update the environment variables in `.env` with your configuration
 
-### Running the Application
+### Development
 
-Start the development server:
+You can run the project in two ways:
+
+#### Option 1: Full Stack Development
+Run the Express server which serves the built React app:
+```bash
+npm run dev
+```
+Access the application at http://localhost:3334
+
+#### Option 2: Separate Development Servers
+In one terminal, start the backend:
 ```bash
 npm run dev
 ```
 
-This will start the server on port 3334, serving both the API and frontend.
+In another terminal, start the React development server:
+```bash
+cd src/client
+npm start
+```
 
-After making frontend changes, rebuild the React app:
+This method provides hot reloading for frontend changes.
+
+### Building for Production
+
+To create a production build:
 ```bash
 npm run client-build
 ```
@@ -127,10 +136,14 @@ npm run client-build
 │   ├── controllers/     # Route controllers
 │   ├── middleware/      # Express middleware
 │   ├── routes/          # API routes
-│   ├── contracts/       # Solidity smart contracts
 │   └── client/          # React frontend application
 │       ├── src/         # React source files
-│       └── build/       # Compiled frontend (served by Express)
+│       │   ├── components/  # React components
+│       │   │   ├── ui/     # UI components
+│       │   │   └── LandingPage.jsx
+│       │   ├── lib/        # Utility functions
+│       │   └── App.js      # Main React component
+│       └── build/       # Compiled frontend
 ├── .env.example         # Environment variables template
 ├── .gitignore          # Git ignore rules
 ├── package.json        # Project dependencies and scripts
@@ -162,39 +175,6 @@ npm run client-build
 - GET `/api/tokens/balance` - Get user's token balance
 - POST `/api/tokens/tip` - Send tip to content creator
 - GET `/api/tokens/rewards` - Get available rewards
-
-## Development
-
-### Smart Contract Development
-Smart contracts will be developed using Hardhat and deployed to Avalanche C-Chain:
-
-1. Navigate to contracts directory:
-```bash
-cd src/contracts
-```
-
-2. Run tests:
-```bash
-npx hardhat test
-```
-
-3. Deploy to Fuji testnet:
-```bash
-npx hardhat run scripts/deploy.js --network fuji
-```
-
-### Frontend Development
-The frontend is built using Create React App and is served by the Express backend. After making changes to the frontend code:
-
-1. Rebuild the frontend:
-```bash
-npm run client-build
-```
-
-2. The changes will be automatically served by the Express backend
-
-### Backend Development
-The backend uses nodemon in development mode, so changes to server files will automatically restart the server.
 
 ## Contributing
 
