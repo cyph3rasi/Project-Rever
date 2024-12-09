@@ -2,9 +2,36 @@
 
 A decentralized social network built on the Avalanche blockchain.
 
-## Features
+## State of the Project
 
-- Wallet-based authentication
+Current Status: **Initial Development - Phase 1**
+
+### Completed Features
+- Basic Express.js backend server setup
+- Avalanche network integration (Fuji testnet)
+- Wallet authentication system
+  - Connect wallet endpoint
+  - Signature verification
+  - Basic authentication middleware
+- Initial React frontend
+  - MetaMask integration
+  - Wallet connection UI
+  - Basic error handling
+
+### In Progress
+- Enhanced security measures for wallet connection
+- Token system implementation
+- Smart contract development
+
+### Next Steps
+1. Implement token mechanics and smart contracts
+2. Add IPFS integration for content storage
+3. Build out post creation and interaction features
+4. Develop user profile system
+
+## Features (Planned)
+
+- Wallet-based authentication ✓ (Basic Implementation)
 - Decentralized content creation and storage
 - Token-based engagement
 - NFT integration
@@ -12,13 +39,26 @@ A decentralized social network built on the Avalanche blockchain.
 - Privacy features
 - Gamification
 
+## Tech Stack
+
+### Current Implementation
+- Backend: Node.js with Express.js
+- Frontend: React with ethers.js
+- Blockchain: Avalanche (Fuji Testnet)
+- Authentication: MetaMask wallet integration
+
+### To Be Implemented
+- Smart Contracts: Solidity
+- Storage: IPFS
+- Database: TBD based on scaling requirements
+
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js (v14 or higher)
 - npm or yarn
-- Avalanche wallet (MetaMask, Core Wallet, etc.)
+- MetaMask wallet
 
 ### Installation
 
@@ -28,9 +68,11 @@ git clone https://github.com/cyph3rasi/Project-Rever.git
 cd Project-Rever
 ```
 
-2. Install dependencies:
+2. Install dependencies for both backend and frontend:
 ```bash
 npm install
+cd src/client && npm install
+cd ../..
 ```
 
 3. Create environment file:
@@ -40,21 +82,35 @@ cp .env.example .env
 
 4. Update the environment variables in `.env` with your configuration
 
-5. Start the development server:
+### Running the Application
+
+#### Development Mode (with hot reloading)
 ```bash
-npm run dev
+npm run dev-all
 ```
+This will start:
+- Backend server on port 3334
+- Frontend development server on port 3005
+
+#### Production Mode
+```bash
+npm run client-build
+npm start
+```
+This will serve both frontend and backend from port 3334
 
 ## Project Structure
 
 ```
 ├── src/
-│   ├── app.js           # Application entry point
+│   ├── app.js           # Backend entry point
 │   ├── config/          # Configuration files
+│   │   └── avalanche.js # Avalanche network setup
 │   ├── controllers/     # Route controllers
+│   ├── middleware/      # Express middleware
 │   ├── routes/          # API routes
-│   └── utils/           # Utility functions
-├── .env.example         # Example environment variables
+│   └── client/          # React frontend application
+├── .env.example         # Environment variables template
 ├── .gitignore          # Git ignore rules
 ├── package.json        # Project dependencies and scripts
 └── README.md           # Project documentation
@@ -67,39 +123,17 @@ npm run dev
 - POST `/api/auth/verify-signature` - Verify wallet signature
 - POST `/api/auth/logout` - Logout
 
-### Posts
+### Posts (To Be Implemented)
 - POST `/api/posts` - Create a new post
 - GET `/api/posts` - Get all posts
 - GET `/api/posts/:id` - Get post by ID
 - POST `/api/posts/:id/like` - Like a post
-- POST `/api/posts/:id/repost` - Repost a post
+- POST `/api/posts/:id/repost` - Repost
 
-### Users
+### Users (To Be Implemented)
 - GET `/api/users/profile/:address` - Get user profile
 - PUT `/api/users/profile` - Update user profile
 - GET `/api/users/:address/posts` - Get user's posts
-
-## Next Steps
-
-1. Complete the smart contract implementations for:
-   - Token system
-   - NFT functionality
-   - DAO governance
-
-2. Implement IPFS integration for:
-   - Media storage
-   - Profile pictures
-   - Content backup
-
-3. Add frontend React components for:
-   - Wallet connection
-   - Post creation and viewing
-   - User profiles
-
-4. Enhance security with:
-   - Rate limiting
-   - Request validation
-   - Signature verification
 
 ## Contributing
 
