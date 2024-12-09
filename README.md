@@ -1,6 +1,6 @@
 # Project Rever
 
-A decentralized social network built on the Avalanche blockchain.
+A decentralized social network built on the Avalanche blockchain, designed to provide a Twitter-like experience with Web3 features.
 
 ## State of the Project
 
@@ -21,23 +21,42 @@ Current Status: **Initial Development - Phase 1**
 ### In Progress
 - Enhanced security measures for wallet connection
 - Token system implementation
-- Smart contract development
+- Smart contract development for core features
+- IPFS integration planning
 
 ### Next Steps
-1. Implement token mechanics and smart contracts
-2. Add IPFS integration for content storage
-3. Build out post creation and interaction features
-4. Develop user profile system
+1. Complete smart contracts for:
+   - Post creation and storage
+   - Token rewards system
+   - Basic engagement features (likes, reposts)
+2. Implement IPFS integration for media storage
+3. Build user profile system with on-chain verification
+4. Develop post creation and interaction frontend
 
 ## Features (Planned)
 
+### Core Features
 - Wallet-based authentication ✓ (Basic Implementation)
-- Decentralized content creation and storage
+- Microblogging functionality
+  - Text posts with metadata on Avalanche
+  - Media storage on IPFS
+  - Threading capability
 - Token-based engagement
+  - Native token for rewards
+  - Tipping system
+  - Premium content access
 - NFT integration
+  - Post minting as NFTs
+  - NFT marketplace
 - DAO governance
+  - Community voting
+  - Platform policy management
 - Privacy features
+  - Controlled content visibility
+  - Zero-knowledge proof integration
 - Gamification
+  - Creator leaderboards
+  - Achievement system
 
 ## Tech Stack
 
@@ -50,7 +69,10 @@ Current Status: **Initial Development - Phase 1**
 ### To Be Implemented
 - Smart Contracts: Solidity
 - Storage: IPFS
-- Database: TBD based on scaling requirements
+- Database: Hybrid approach
+  - On-chain: Core post metadata
+  - Off-chain: Performance-critical data
+- Indexing: The Graph (planned)
 
 ## Getting Started
 
@@ -59,6 +81,7 @@ Current Status: **Initial Development - Phase 1**
 - Node.js (v14 or higher)
 - npm or yarn
 - MetaMask wallet
+- Avalanche Fuji Testnet configured in MetaMask
 
 ### Installation
 
@@ -104,6 +127,7 @@ npm run client-build
 │   ├── controllers/     # Route controllers
 │   ├── middleware/      # Express middleware
 │   ├── routes/          # API routes
+│   ├── contracts/       # Solidity smart contracts
 │   └── client/          # React frontend application
 │       ├── src/         # React source files
 │       └── build/       # Compiled frontend (served by Express)
@@ -126,13 +150,38 @@ npm run client-build
 - GET `/api/posts/:id` - Get post by ID
 - POST `/api/posts/:id/like` - Like a post
 - POST `/api/posts/:id/repost` - Repost
+- POST `/api/posts/:id/mint-nft` - Mint post as NFT
 
 ### Users (To Be Implemented)
 - GET `/api/users/profile/:address` - Get user profile
 - PUT `/api/users/profile` - Update user profile
 - GET `/api/users/:address/posts` - Get user's posts
+- GET `/api/users/:address/nfts` - Get user's NFTs
+
+### Token Operations (To Be Implemented)
+- GET `/api/tokens/balance` - Get user's token balance
+- POST `/api/tokens/tip` - Send tip to content creator
+- GET `/api/tokens/rewards` - Get available rewards
 
 ## Development
+
+### Smart Contract Development
+Smart contracts will be developed using Hardhat and deployed to Avalanche C-Chain:
+
+1. Navigate to contracts directory:
+```bash
+cd src/contracts
+```
+
+2. Run tests:
+```bash
+npx hardhat test
+```
+
+3. Deploy to Fuji testnet:
+```bash
+npx hardhat run scripts/deploy.js --network fuji
+```
 
 ### Frontend Development
 The frontend is built using Create React App and is served by the Express backend. After making changes to the frontend code:
