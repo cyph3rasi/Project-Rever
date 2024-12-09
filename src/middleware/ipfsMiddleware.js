@@ -1,4 +1,5 @@
 const multer = require('multer');
+const { File } = require('web3.storage');
 const { uploadToIPFS } = require('../config/ipfs');
 
 // Configure multer for memory storage
@@ -26,13 +27,22 @@ const handleIPFSUpload = async (req, res, next) => {
       return next();
     }
 
+    // Convert multer files to web3.storage Files
+    const files = req.files.map(file => {
+      return new File(
+        [file.buffer],
+        file.originalname,
+        { type: file.mimetype }
+      );
+    });
+
     // Upload each file to IPFS
     const ipfsResults = await Promise.all(
-      req.files.map(async (file) => {
-        const result = await uploadToIPFS(file.buffer);
+      files.map(async (file) => {
+        const result = await uploadToIPFS(file);
         return {
-          originalName: file.originalname,
-          mimetype: file.mimetype,
+          originalName: file.name,
+          type: file.type,
           ...result
         };
       })
