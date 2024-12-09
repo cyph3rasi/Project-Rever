@@ -10,7 +10,10 @@ const routes = require('./routes');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000',  // React dev server
+  credentials: true
+}));
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
@@ -27,7 +30,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3334;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
