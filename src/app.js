@@ -31,15 +31,21 @@ app.use(session({
 // Initialize Avalanche network connection
 setupAvalancheNetwork();
 
+// Serve test upload page
+app.get('/test-upload', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/public/test-upload.html'));
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api', routes);
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, 'client/build')));
+app.use(express.static(path.join(__dirname, 'client/public')));
 
 // The "catch-all" handler: for any request that doesn't
-// match an API route, send back the React app's index.html file.
+// match one of the above, send back React's index.html file.
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
 });
@@ -78,6 +84,7 @@ const startServer = async () => {
     
     app.listen(port, () => {
       console.log(`Server running on port ${port}`);
+      console.log(`Test upload page available at: http://localhost:${port}/test-upload`);
     });
   } catch (err) {
     console.error('Failed to start server:', err);
