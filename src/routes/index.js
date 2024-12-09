@@ -5,6 +5,7 @@ const router = express.Router();
 const authRoutes = require('./auth.routes');
 const postRoutes = require('./post.routes');
 const userRoutes = require('./user.routes');
+const mediaRoutes = require('./media');
 
 // Basic test endpoint
 router.get('/', (req, res) => {
@@ -13,7 +14,8 @@ router.get('/', (req, res) => {
     endpoints: {
       auth: '/api/auth',
       posts: '/api/posts',
-      users: '/api/users'
+      users: '/api/users',
+      media: '/api/media'
     }
   });
 });
@@ -22,5 +24,6 @@ router.get('/', (req, res) => {
 router.use('/auth', authRoutes);
 router.use('/posts', postRoutes);
 router.use('/users', userRoutes);
+router.use('/media', mediaRoutes);
 
 module.exports = router;
