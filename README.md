@@ -68,11 +68,9 @@ git clone https://github.com/cyph3rasi/Project-Rever.git
 cd Project-Rever
 ```
 
-2. Install dependencies for both backend and frontend:
+2. Run the setup script (installs all dependencies and builds the frontend):
 ```bash
-npm install
-cd src/client && npm install
-cd ../..
+npm run setup
 ```
 
 3. Create environment file:
@@ -84,32 +82,31 @@ cp .env.example .env
 
 ### Running the Application
 
-#### Development Mode (with hot reloading)
+Start the development server:
 ```bash
-npm run dev-all
+npm run dev
 ```
-This will start:
-- Backend server on port 3334
-- Frontend development server on port 3005
 
-#### Production Mode
+This will start the server on port 3334, serving both the API and frontend.
+
+After making frontend changes, rebuild the React app:
 ```bash
 npm run client-build
-npm start
 ```
-This will serve both frontend and backend from port 3334
 
 ## Project Structure
 
 ```
 ├── src/
-│   ├── app.js           # Backend entry point
+│   ├── app.js           # Server entry point
 │   ├── config/          # Configuration files
 │   │   └── avalanche.js # Avalanche network setup
 │   ├── controllers/     # Route controllers
 │   ├── middleware/      # Express middleware
 │   ├── routes/          # API routes
 │   └── client/          # React frontend application
+│       ├── src/         # React source files
+│       └── build/       # Compiled frontend (served by Express)
 ├── .env.example         # Environment variables template
 ├── .gitignore          # Git ignore rules
 ├── package.json        # Project dependencies and scripts
@@ -134,6 +131,21 @@ This will serve both frontend and backend from port 3334
 - GET `/api/users/profile/:address` - Get user profile
 - PUT `/api/users/profile` - Update user profile
 - GET `/api/users/:address/posts` - Get user's posts
+
+## Development
+
+### Frontend Development
+The frontend is built using Create React App and is served by the Express backend. After making changes to the frontend code:
+
+1. Rebuild the frontend:
+```bash
+npm run client-build
+```
+
+2. The changes will be automatically served by the Express backend
+
+### Backend Development
+The backend uses nodemon in development mode, so changes to server files will automatically restart the server.
 
 ## Contributing
 
