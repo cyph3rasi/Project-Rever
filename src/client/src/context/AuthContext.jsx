@@ -4,6 +4,7 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [walletAddress, setWalletAddress] = useState(null);
+  const [hasProfile, setHasProfile] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Check if user is already authenticated
@@ -14,6 +15,7 @@ export const AuthProvider = ({ children }) => {
         const data = await response.json();
         if (data.success && data.address) {
           setWalletAddress(data.address);
+          setHasProfile(data.hasProfile);
         }
       } catch (error) {
         console.error('Auth check error:', error);
@@ -25,17 +27,31 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
+  const updateAuthState = (address, profileExists) => {
+    setWalletAddress(address);
+    setHasProfile(profileExists);
+  };
+
   const logout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       setWalletAddress(null);
+      setHasProfile(false);
     } catch (error) {
       console.error('Logout error:', error);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ walletAddress, setWalletAddress, loading, logout }}>
+    <AuthContext.Provider 
+      value={{ 
+        walletAddress, 
+        hasProfile,
+        loading, 
+        updateAuthState,
+        logout 
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
