@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { useAuth } from '../../context/AuthContext';
@@ -22,65 +22,39 @@ const ConnectWallet = () => {
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
 
-  const switchToAvalancheNetwork = async () => {
-    try {
-      setStatus('Switching to Avalanche network...');
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: AVALANCHE_TESTNET_PARAMS.chainId }],
-      });
-      return true;
-    } catch (switchError) {
-      if (switchError.code === 4902) {
-        try {
-          setStatus('Adding Avalanche network...');
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [AVALANCHE_TESTNET_PARAMS],
-          });
-          return true;
-        } catch (addError) {
-          console.error('Error adding Avalanche network:', addError);
-          throw new Error('Failed to add Avalanche network');
-        }
-      }
-      throw switchError;
-    }
-  };
+  // Force an error to show in the UI for debugging
+  useEffect(() => {
+    alert('ConnectWallet component mounted');
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+      alert('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo);
+      return false;
+    };
+  }, []);
 
   const connectWallet = async () => {
     try {
+      alert('Starting wallet connection...');
       setIsConnecting(true);
       setError('');
-      setStatus('Starting connection process...');
 
       if (!window.ethereum) {
         throw new Error('Please install MetaMask to continue');
       }
 
-      // Switch to Avalanche network
-      await switchToAvalancheNetwork();
-
-      setStatus('Requesting account access...');
-      // Request account access
       const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
       });
 
       const address = accounts[0];
-      setStatus(`Account connected: ${address}`);
+      alert('Got address: ' + address);
 
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      setStatus('Got signer, preparing message...');
 
-      // Sign a message to verify ownership
       const message = `Sign this message to verify your wallet ownership\nTimestamp: ${Date.now()}`;
-      setStatus('Requesting signature...');
       const signature = await signer.signMessage(message);
-      setStatus('Message signed, verifying with backend...');
 
-      // Verify signature with backend
+      alert('About to verify signature with backend');
       const response = await fetch('/api/auth/verify-signature', {
         method: 'POST',
         headers: {
@@ -93,36 +67,32 @@ const ConnectWallet = () => {
         })
       });
 
-      setStatus('Got response from backend, processing...');
       const data = await response.json();
-      console.log('BACKEND RESPONSE:', data);
+      alert('Backend response: ' + JSON.stringify(data));
 
       if (!data.success) {
         throw new Error(data.error || 'Failed to verify wallet');
       }
 
-      setStatus('Connection successful!');
-      
-      // Debug log to catch the exact state before navigation
-      console.log('DEBUGGING STATE BEFORE NAVIGATION:');
-      console.log('hasProfile value:', data.hasProfile);
-      console.log('Current pathname:', window.location.pathname);
-      console.log('About to navigate to:', data.hasProfile ? '/feed' : '/create-profile');
-      
-      // Update the auth context
+      // Force error if hasProfile is undefined
+      if (typeof data.hasProfile === 'undefined') {
+        throw new Error('hasProfile is undefined in response');
+      }
+
+      // Update auth context state
       updateAuthState(data.address, data.hasProfile);
+      
+      alert('About to navigate. hasProfile: ' + data.hasProfile);
       
       // Navigate based on profile status
       if (data.hasProfile) {
-        console.log('Navigating to /feed...');
         navigate('/feed');
       } else {
-        console.log('Navigating to /create-profile...');
         navigate('/create-profile');
       }
 
     } catch (err) {
-      console.error('Wallet connection error:', err);
+      alert('Error: ' + err.message);
       setError(err.message || 'Failed to connect wallet');
     } finally {
       setIsConnecting(false);
