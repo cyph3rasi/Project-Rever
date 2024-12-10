@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
 
 const AVALANCHE_TESTNET_PARAMS = {
@@ -13,10 +14,11 @@ const AVALANCHE_TESTNET_PARAMS = {
   blockExplorerUrls: ['https://testnet.snowtrace.io/']
 };
 
-const ConnectWallet = ({ onConnect }) => {
+const ConnectWallet = () => {
+  const navigate = useNavigate();
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState('');
-  const [status, setStatus] = useState(''); // For debugging
+  const [status, setStatus] = useState('');
 
   const switchToAvalancheNetwork = async () => {
     try {
@@ -99,10 +101,12 @@ const ConnectWallet = ({ onConnect }) => {
       }
 
       setStatus('Connection successful!');
-      if (onConnect) {
-        onConnect(address);
+      
+      // Check if user has a profile
+      if (data.hasProfile) {
+        navigate('/feed');
       } else {
-        console.error('onConnect callback is not defined');
+        navigate('/create-profile');
       }
 
     } catch (err) {
