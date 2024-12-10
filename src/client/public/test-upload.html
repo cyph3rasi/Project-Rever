@@ -54,7 +54,8 @@
             formData.append('file', fileInput.files[0]);
 
             try {
-                const response = await fetch('/api/storage/test-upload', {
+                console.log('Sending upload request...');
+                const response = await fetch('/test-upload', {
                     method: 'POST',
                     body: formData
                 });

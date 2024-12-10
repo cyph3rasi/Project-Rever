@@ -4,11 +4,13 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const session = require('express-session');
 const path = require('path');
+const multer = require('multer');
 require('dotenv').config();
 
 const { setupAvalancheNetwork } = require('./config/avalanche');
 const routes = require('./routes');
 const authRoutes = require('./routes/auth');
+const { uploadToIPFS } = require('./config/ipfs');
 
 const app = express();
 
@@ -30,6 +32,41 @@ app.use(session({
 
 // Initialize Avalanche network connection
 setupAvalancheNetwork();
+
+// Configure multer for test uploads
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
+
+// Test upload endpoint (no auth required)
+app.post('/test-upload', upload.single('file'), async (req, res) => {
+  try {
+    console.log('Test upload received:', req.file);
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+
+    const result = await uploadToIPFS(req.file);
+    console.log('IPFS upload result:', result);
+
+    res.json({
+      success: true,
+      cid: result.cid,
+      url: result.url
+    });
+  } catch (error) {
+    console.error('Test upload error:', error);
+    res.status(500).json({ 
+      error: 'Failed to upload file to IPFS',
+      details: error.message 
+    });
+  }
+});
 
 // Serve test upload page
 app.get('/test-upload', (req, res) => {
