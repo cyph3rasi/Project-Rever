@@ -3,11 +3,21 @@ const { uploadToIPFS, uploadJSONToIPFS, getFromIPFS, unpinFromIPFS } = require('
 // Handle file uploads to IPFS
 const uploadFile = async (req, res) => {
   try {
+    console.log('Upload request received:', {
+      headers: req.headers,
+      file: req.file,
+      body: req.body
+    });
+
     if (!req.file) {
+      console.error('No file in request');
       return res.status(400).json({ error: 'No file provided' });
     }
 
+    console.log('Processing file:', req.file.originalname);
     const result = await uploadToIPFS(req.file);
+    console.log('IPFS upload result:', result);
+
     res.json({
       success: true,
       cid: result.cid,
@@ -15,7 +25,10 @@ const uploadFile = async (req, res) => {
     });
   } catch (error) {
     console.error('File upload error:', error);
-    res.status(500).json({ error: 'Failed to upload file to IPFS' });
+    res.status(500).json({ 
+      error: 'Failed to upload file to IPFS',
+      details: error.message
+    });
   }
 };
 
