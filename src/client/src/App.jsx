@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/layout/Navbar';
 import ConnectWallet from './components/auth/ConnectWallet';
@@ -19,8 +19,17 @@ const Feed = () => (
 // Profile check wrapper
 const ProfileCheckRoute = ({ element: Element }) => {
   const { walletAddress, hasProfile, loading } = useAuth();
+  const location = useLocation();
+
+  console.log('ProfileCheckRoute state:', {
+    walletAddress,
+    hasProfile,
+    loading,
+    currentPath: location.pathname
+  });
 
   if (loading) {
+    console.log('Still loading auth state...');
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
@@ -29,24 +38,36 @@ const ProfileCheckRoute = ({ element: Element }) => {
   }
 
   if (!walletAddress) {
-    return <Navigate to="/connect" replace />;
+    console.log('No wallet address, redirecting to connect');
+    return <Navigate to="/connect" replace state={{ from: location }} />;
   }
 
   if (walletAddress && !hasProfile) {
-    return <Navigate to="/create-profile" replace />;
+    console.log('Has wallet but no profile, redirecting to profile creation');
+    return <Navigate to="/create-profile" replace state={{ from: location }} />;
   }
 
+  console.log('All checks passed, rendering protected content');
   return <Element />;
 };
 
 // Home component with auth-aware rendering
 const Home = () => {
   const { walletAddress, hasProfile } = useAuth();
+  const location = useLocation();
+
+  console.log('Home component state:', {
+    walletAddress,
+    hasProfile,
+    currentPath: location.pathname
+  });
 
   if (walletAddress) {
     if (hasProfile) {
+      console.log('User has wallet and profile, redirecting to feed');
       return <Navigate to="/feed" replace />;
     } else {
+      console.log('User has wallet but no profile, redirecting to profile creation');
       return <Navigate to="/create-profile" replace />;
     }
   }
