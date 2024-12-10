@@ -2,9 +2,11 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-const PrivateRoute = ({ children }) => {
-  const { walletAddress, loading } = useAuth();
+const PrivateRoute = ({ children, requireProfile = true }) => {
+  const { walletAddress, hasProfile, loading } = useAuth();
   const location = useLocation();
+
+  console.log('PrivateRoute state:', { walletAddress, hasProfile, loading, requireProfile });
 
   if (loading) {
     return (
@@ -15,7 +17,13 @@ const PrivateRoute = ({ children }) => {
   }
 
   if (!walletAddress) {
+    console.log('No wallet, redirecting to connect');
     return <Navigate to="/connect" state={{ from: location }} replace />;
+  }
+
+  if (requireProfile && !hasProfile) {
+    console.log('No profile, redirecting to create profile');
+    return <Navigate to="/create-profile" state={{ from: location }} replace />;
   }
 
   return children;
