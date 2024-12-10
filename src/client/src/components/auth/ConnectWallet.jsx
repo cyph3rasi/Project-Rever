@@ -1,31 +1,81 @@
 import React, { useState } from 'react';
 import { ethers } from 'ethers';
 
+const AVALANCHE_TESTNET_PARAMS = {
+  chainId: '0xA869',
+  chainName: 'Avalanche Testnet C-Chain',
+  nativeCurrency: {
+    name: 'Avalanche',
+    symbol: 'AVAX',
+    decimals: 18
+  },
+  rpcUrls: ['https://api.avax-test.network/ext/bc/C/rpc'],
+  blockExplorerUrls: ['https://testnet.snowtrace.io/']
+};
+
 const ConnectWallet = ({ onConnect }) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState('');
+  const [status, setStatus] = useState(''); // For debugging
+
+  const switchToAvalancheNetwork = async () => {
+    try {
+      setStatus('Switching to Avalanche network...');
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: AVALANCHE_TESTNET_PARAMS.chainId }],
+      });
+      return true;
+    } catch (switchError) {
+      // This error code indicates that the chain has not been added to MetaMask
+      if (switchError.code === 4902) {
+        try {
+          setStatus('Adding Avalanche network...');
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [AVALANCHE_TESTNET_PARAMS],
+          });
+          return true;
+        } catch (addError) {
+          console.error('Error adding Avalanche network:', addError);
+          throw new Error('Failed to add Avalanche network');
+        }
+      }
+      throw switchError;
+    }
+  };
 
   const connectWallet = async () => {
     try {
       setIsConnecting(true);
       setError('');
+      setStatus('Starting connection process...');
 
       if (!window.ethereum) {
         throw new Error('Please install MetaMask to continue');
       }
 
+      // Switch to Avalanche network
+      await switchToAvalancheNetwork();
+
+      setStatus('Requesting account access...');
       // Request account access
       const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
       });
 
       const address = accounts[0];
+      setStatus(`Account connected: ${address}`);
+
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
+      setStatus('Got signer, preparing message...');
 
       // Sign a message to verify ownership
       const message = `Sign this message to verify your wallet ownership\nTimestamp: ${Date.now()}`;
+      setStatus('Requesting signature...');
       const signature = await signer.signMessage(message);
+      setStatus('Message signed, verifying with backend...');
 
       // Verify signature with backend
       const response = await fetch('/api/auth/verify-signature', {
@@ -40,13 +90,21 @@ const ConnectWallet = ({ onConnect }) => {
         })
       });
 
+      setStatus('Got response from backend, processing...');
       const data = await response.json();
+      console.log('Backend response:', data);
 
       if (!data.success) {
         throw new Error(data.error || 'Failed to verify wallet');
       }
 
-      onConnect(address);
+      setStatus('Connection successful!');
+      if (onConnect) {
+        onConnect(address);
+      } else {
+        console.error('onConnect callback is not defined');
+      }
+
     } catch (err) {
       console.error('Wallet connection error:', err);
       setError(err.message || 'Failed to connect wallet');
@@ -66,6 +124,12 @@ const ConnectWallet = ({ onConnect }) => {
       >
         {isConnecting ? 'Connecting...' : 'Connect with MetaMask'}
       </button>
+
+      {status && (
+        <div className="mt-4 p-4 bg-blue-100 text-blue-700 rounded-lg">
+          {status}
+        </div>
+      )}
 
       {error && (
         <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-lg">
