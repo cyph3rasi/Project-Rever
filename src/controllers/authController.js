@@ -1,5 +1,5 @@
 const ethers = require('ethers');
-const Profile = require('../models/Profile');
+const supabase = require('../config/supabase');
 
 const verifySignature = async (req, res) => {
   try {
@@ -24,7 +24,11 @@ const verifySignature = async (req, res) => {
     req.session.walletAddress = address.toLowerCase();
 
     // Check if user has a profile
-    const profile = await Profile.findOne({ walletAddress: address.toLowerCase() });
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select()
+      .eq('wallet_address', address.toLowerCase())
+      .single();
 
     res.json({ 
       success: true, 
@@ -48,9 +52,11 @@ const checkAuth = async (req, res) => {
       });
     }
 
-    const profile = await Profile.findOne({ 
-      walletAddress: req.session.walletAddress 
-    });
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select()
+      .eq('wallet_address', req.session.walletAddress)
+      .single();
 
     res.json({
       success: true,
