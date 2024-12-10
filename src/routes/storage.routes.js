@@ -13,11 +13,22 @@ const upload = multer({
   }
 });
 
-// File upload routes
+// Test route without auth
+router.post('/test-upload', upload.single('file'), async (req, res) => {
+  try {
+    console.log('Test upload received:', req.file);
+    const result = await uploadFile(req, res);
+    console.log('Upload result:', result);
+    return result;
+  } catch (error) {
+    console.error('Test upload error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Regular routes with auth
 router.post('/upload', auth, upload.single('file'), uploadFile);
 router.post('/upload-json', auth, uploadJSON);
-
-// Content management routes
 router.get('/:cid', auth, getContent);
 router.delete('/:cid', auth, unpinContent);
 

@@ -50,15 +50,18 @@
             responseDiv.textContent = 'Uploading...';
 
             const formData = new FormData();
-            formData.append('file', document.getElementById('file').files[0]);
+            const fileInput = document.getElementById('file');
+            formData.append('file', fileInput.files[0]);
 
             try {
-                const response = await fetch('/api/storage/upload', {
+                const response = await fetch('/api/storage/test-upload', {
                     method: 'POST',
                     body: formData
                 });
 
+                console.log('Response status:', response.status);
                 const result = await response.json();
+                console.log('Response data:', result);
 
                 if (result.success) {
                     responseDiv.className = 'success';
@@ -71,6 +74,7 @@
                     throw new Error(result.error || 'Upload failed');
                 }
             } catch (error) {
+                console.error('Upload error:', error);
                 responseDiv.className = 'error';
                 responseDiv.textContent = `Error: ${error.message}`;
             }
