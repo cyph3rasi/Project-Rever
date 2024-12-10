@@ -7,10 +7,12 @@ const ConnectWallet = () => {
   const navigate = useNavigate();
   const { updateAuthState } = useAuth();
   const [isConnecting, setIsConnecting] = useState(false);
+  const [error, setError] = useState('');
 
   const connectWallet = async () => {
     try {
       setIsConnecting(true);
+      setError('');
       
       if (!window.ethereum) {
         throw new Error('Please install MetaMask');
@@ -43,12 +45,13 @@ const ConnectWallet = () => {
         throw new Error(data.error || 'Failed to verify wallet');
       }
 
-      updateAuthState(data.address, false);
+      updateAuthState(address, false);
       navigate('/create-profile');
 
     } catch (err) {
+      setError(err.message);
+    } finally {
       setIsConnecting(false);
-      throw err;
     }
   };
 
@@ -63,6 +66,12 @@ const ConnectWallet = () => {
       >
         {isConnecting ? 'Connecting...' : 'Connect with MetaMask'}
       </button>
+
+      {error && (
+        <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-lg">
+          {error}
+        </div>
+      )}
 
       <p className="mt-4 text-sm text-gray-600 text-center">
         Don't have MetaMask? <a href="https://metamask.io" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">Download here</a>
