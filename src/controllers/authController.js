@@ -22,13 +22,21 @@ const verifySignature = async (req, res) => {
 
     // Create a session
     req.session.walletAddress = address.toLowerCase();
+    console.log('Session created for wallet:', req.session.walletAddress);
 
     // Check if user has a profile
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select()
       .eq('wallet_address', address.toLowerCase())
       .single();
+
+    if (profileError) {
+      console.error('Supabase profile query error:', profileError);
+      // If the error is because the table doesn't exist, we'll see it here
+    }
+
+    console.log('Profile query result:', { profile, profileError });
 
     res.json({ 
       success: true, 
@@ -39,7 +47,8 @@ const verifySignature = async (req, res) => {
   } catch (error) {
     console.error('Auth error:', error);
     res.status(500).json({ 
-      error: 'Authentication failed' 
+      error: 'Authentication failed',
+      details: error.message 
     });
   }
 };
@@ -52,11 +61,22 @@ const checkAuth = async (req, res) => {
       });
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select()
       .eq('wallet_address', req.session.walletAddress)
       .single();
+
+    if (profileError) {
+      console.error('Supabase profile check error:', profileError);
+    }
+
+    console.log('Auth check result:', { 
+      walletAddress: req.session.walletAddress,
+      hasProfile: !!profile,
+      profile,
+      profileError
+    });
 
     res.json({
       success: true,
@@ -66,7 +86,8 @@ const checkAuth = async (req, res) => {
   } catch (error) {
     console.error('Auth check error:', error);
     res.status(500).json({ 
-      error: 'Failed to check authentication' 
+      error: 'Failed to check authentication',
+      details: error.message 
     });
   }
 };
