@@ -1,4 +1,5 @@
 const ethers = require('ethers');
+const Profile = require('../models/Profile');
 
 const verifySignature = async (req, res) => {
   try {
@@ -20,17 +21,46 @@ const verifySignature = async (req, res) => {
     }
 
     // Create a session
-    req.session.walletAddress = address;
+    req.session.walletAddress = address.toLowerCase();
+
+    // Check if user has a profile
+    const profile = await Profile.findOne({ walletAddress: address.toLowerCase() });
 
     res.json({ 
       success: true, 
-      address 
+      address: address.toLowerCase(),
+      hasProfile: !!profile
     });
 
   } catch (error) {
     console.error('Auth error:', error);
     res.status(500).json({ 
       error: 'Authentication failed' 
+    });
+  }
+};
+
+const checkAuth = async (req, res) => {
+  try {
+    if (!req.session.walletAddress) {
+      return res.json({ 
+        success: false 
+      });
+    }
+
+    const profile = await Profile.findOne({ 
+      walletAddress: req.session.walletAddress 
+    });
+
+    res.json({
+      success: true,
+      address: req.session.walletAddress,
+      hasProfile: !!profile
+    });
+  } catch (error) {
+    console.error('Auth check error:', error);
+    res.status(500).json({ 
+      error: 'Failed to check authentication' 
     });
   }
 };
@@ -42,5 +72,6 @@ const logout = (req, res) => {
 
 module.exports = {
   verifySignature,
+  checkAuth,
   logout
 };
