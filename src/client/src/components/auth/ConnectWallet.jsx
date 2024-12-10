@@ -31,7 +31,6 @@ const ConnectWallet = () => {
       });
       return true;
     } catch (switchError) {
-      // This error code indicates that the chain has not been added to MetaMask
       if (switchError.code === 4902) {
         try {
           setStatus('Adding Avalanche network...');
@@ -54,16 +53,15 @@ const ConnectWallet = () => {
       setIsConnecting(true);
       setError('');
       setStatus('Starting connection process...');
+      console.log('Starting wallet connection...');
 
       if (!window.ethereum) {
         throw new Error('Please install MetaMask to continue');
       }
 
-      // Switch to Avalanche network
       await switchToAvalancheNetwork();
 
       setStatus('Requesting account access...');
-      // Request account access
       const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
       });
@@ -75,13 +73,11 @@ const ConnectWallet = () => {
       const signer = await provider.getSigner();
       setStatus('Got signer, preparing message...');
 
-      // Sign a message to verify ownership
-      const message = `Sign this message to verify your wallet ownership\nTimestamp: ${Date.now()}`;
+      const message = `Sign this message to authenticate with Rever\nAddress: ${address}\nTimestamp: ${Date.now()}`;
       setStatus('Requesting signature...');
       const signature = await signer.signMessage(message);
       setStatus('Message signed, verifying with backend...');
 
-      // Verify signature with backend
       const response = await fetch('/api/auth/verify-signature', {
         method: 'POST',
         headers: {
@@ -103,10 +99,12 @@ const ConnectWallet = () => {
       }
 
       setStatus('Connection successful!');
+      console.log('Updating auth state:', { address: data.address, hasProfile: data.hasProfile });
       
-      // Update auth context with the new state
+      // Update the auth context
       updateAuthState(data.address, data.hasProfile);
       
+      console.log('Navigating based on profile status:', data.hasProfile);
       // Navigate based on profile status
       if (data.hasProfile) {
         navigate('/feed');
