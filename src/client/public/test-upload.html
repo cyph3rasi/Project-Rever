@@ -18,6 +18,8 @@
             margin-top: 20px;
             padding: 10px;
             border-radius: 4px;
+            white-space: pre-wrap;
+            word-break: break-all;
         }
         .success {
             background-color: #d4edda;
@@ -28,6 +30,11 @@
             background-color: #f8d7da;
             border: 1px solid #f5c6cb;
             color: #721c24;
+        }
+        .loading {
+            background-color: #e2e3e5;
+            border: 1px solid #d6d8db;
+            color: #383d41;
         }
     </style>
 </head>
@@ -45,16 +52,27 @@
     <script>
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
             const responseDiv = document.getElementById('response');
-            responseDiv.className = '';
+            const fileInput = document.getElementById('file');
+            const file = fileInput.files[0];
+
+            // Basic validation
+            if (!file) {
+                responseDiv.className = 'error';
+                responseDiv.textContent = 'Please select a file first';
+                return;
+            }
+
+            // Show loading state
+            responseDiv.className = 'loading';
             responseDiv.textContent = 'Uploading...';
 
             const formData = new FormData();
-            const fileInput = document.getElementById('file');
-            formData.append('file', fileInput.files[0]);
+            formData.append('file', file);
 
             try {
-                console.log('Sending upload request...');
+                console.log('Sending upload request for file:', file.name);
                 const response = await fetch('/test-upload', {
                     method: 'POST',
                     body: formData
@@ -66,11 +84,14 @@
 
                 if (result.success) {
                     responseDiv.className = 'success';
-                    responseDiv.innerHTML = `
-                        File uploaded successfully!<br>
-                        CID: ${result.cid}<br>
-                        URL: <a href="${result.url}" target="_blank">${result.url}</a>
-                    `;
+                    responseDiv.innerHTML = `File uploaded successfully!
+
+Filename: ${file.name}
+Size: ${(file.size / 1024).toFixed(2)} KB
+Type: ${file.type}
+
+CID: ${result.cid}
+URL: <a href="${result.url}" target="_blank">${result.url}</a>`;
                 } else {
                     throw new Error(result.error || 'Upload failed');
                 }
@@ -78,6 +99,11 @@
                 console.error('Upload error:', error);
                 responseDiv.className = 'error';
                 responseDiv.textContent = `Error: ${error.message}`;
+                
+                // Add detailed error info if available
+                if (error.details) {
+                    responseDiv.textContent += `\n\nDetails: ${error.details}`;
+                }
             }
         });
     </script>
