@@ -7,16 +7,12 @@ const path = require('path');
 const multer = require('multer');
 require('dotenv').config();
 
-const connectDB = require('./config/database');
 const { setupAvalancheNetwork } = require('./config/avalanche');
 const routes = require('./routes');
 const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile.routes');
 
 const app = express();
-
-// Connect to MongoDB
-connectDB();
 
 // Enable full request logging
 morgan.token('body', (req) => JSON.stringify(req.body));
