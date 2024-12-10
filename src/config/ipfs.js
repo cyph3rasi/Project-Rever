@@ -1,4 +1,6 @@
 const pinataSDK = require('@pinata/sdk');
+const { Readable } = require('stream');
+const fs = require('fs');
 
 // Configure Pinata client
 const setupStorageClient = () => {
@@ -20,10 +22,17 @@ const setupStorageClient = () => {
 // Utility function to upload file to IPFS via Pinata
 const uploadToIPFS = async (file) => {
   try {
+    console.log('Starting file upload to IPFS...');
+    console.log('File details:', {
+      filename: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size
+    });
+
     const client = setupStorageClient();
     
-    // Create readable stream from file buffer
     const readableStreamForFile = new Readable();
+    readableStreamForFile._read = () => {}; // Required for readable streams
     readableStreamForFile.push(file.buffer);
     readableStreamForFile.push(null);
 
@@ -33,10 +42,13 @@ const uploadToIPFS = async (file) => {
       }
     };
     
+    console.log('Uploading to Pinata...');
     // Upload the file
     const result = await client.pinFileToIPFS(readableStreamForFile, options);
+    console.log('Pinata upload result:', result);
     
     return {
+      success: true,
       cid: result.IpfsHash,
       url: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`
     };
@@ -61,6 +73,7 @@ const uploadJSONToIPFS = async (jsonData) => {
     const result = await client.pinJSONToIPFS(jsonData, options);
     
     return {
+      success: true,
       cid: result.IpfsHash,
       url: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}`
     };
