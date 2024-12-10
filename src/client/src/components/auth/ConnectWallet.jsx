@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { useAuth } from '../../context/AuthContext';
 
@@ -15,6 +16,7 @@ const AVALANCHE_TESTNET_PARAMS = {
 };
 
 const ConnectWallet = () => {
+  const navigate = useNavigate();
   const { updateAuthState } = useAuth();
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState('');
@@ -51,15 +53,16 @@ const ConnectWallet = () => {
       setIsConnecting(true);
       setError('');
       setStatus('Starting connection process...');
-      console.log('Starting wallet connection...');
 
       if (!window.ethereum) {
         throw new Error('Please install MetaMask to continue');
       }
 
+      // Switch to Avalanche network
       await switchToAvalancheNetwork();
 
       setStatus('Requesting account access...');
+      // Request account access
       const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
       });
@@ -71,11 +74,13 @@ const ConnectWallet = () => {
       const signer = await provider.getSigner();
       setStatus('Got signer, preparing message...');
 
-      const message = `Sign this message to authenticate with Rever\nAddress: ${address}\nTimestamp: ${Date.now()}`;
+      // Sign a message to verify ownership
+      const message = `Sign this message to verify your wallet ownership\nTimestamp: ${Date.now()}`;
       setStatus('Requesting signature...');
       const signature = await signer.signMessage(message);
       setStatus('Message signed, verifying with backend...');
 
+      // Verify signature with backend
       const response = await fetch('/api/auth/verify-signature', {
         method: 'POST',
         headers: {
@@ -90,17 +95,31 @@ const ConnectWallet = () => {
 
       setStatus('Got response from backend, processing...');
       const data = await response.json();
-      console.log('Backend response:', data);
+      console.log('BACKEND RESPONSE:', data);
 
       if (!data.success) {
         throw new Error(data.error || 'Failed to verify wallet');
       }
 
       setStatus('Connection successful!');
-      console.log('Updating auth state:', { address: data.address, hasProfile: data.hasProfile });
       
-      // Update the auth context and let the router handle navigation
+      // Debug log to catch the exact state before navigation
+      console.log('DEBUGGING STATE BEFORE NAVIGATION:');
+      console.log('hasProfile value:', data.hasProfile);
+      console.log('Current pathname:', window.location.pathname);
+      console.log('About to navigate to:', data.hasProfile ? '/feed' : '/create-profile');
+      
+      // Update the auth context
       updateAuthState(data.address, data.hasProfile);
+      
+      // Navigate based on profile status
+      if (data.hasProfile) {
+        console.log('Navigating to /feed...');
+        navigate('/feed');
+      } else {
+        console.log('Navigating to /create-profile...');
+        navigate('/create-profile');
+      }
 
     } catch (err) {
       console.error('Wallet connection error:', err);
