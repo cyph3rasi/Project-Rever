@@ -1,4 +1,4 @@
-const Profile = require('../models/Profile');
+const supabase = require('../config/supabase');
 const { uploadToIPFS } = require('../config/ipfs');
 
 // Create or update profile
@@ -25,41 +25,61 @@ const upsertProfile = async (req, res) => {
       coverIPFSHash = result.cid;
     }
 
-    // Find existing profile or create new one
-    let profile = await Profile.findOne({ walletAddress });
+    // Check if profile exists
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select()
+      .eq('wallet_address', walletAddress)
+      .single();
 
-    if (profile) {
+    // Prepare profile data
+    const profileData = {
+      wallet_address: walletAddress,
+      username,
+      bio: bio || '',
+      social_links: socialLinks,
+      updated_at: new Date().toISOString()
+    };
+
+    if (avatarIPFSHash) profileData.avatar_ipfs_hash = avatarIPFSHash;
+    if (coverIPFSHash) profileData.cover_ipfs_hash = coverIPFSHash;
+
+    let profile;
+    if (existingProfile) {
       // Update existing profile
-      profile.username = username;
-      profile.bio = bio || profile.bio;
-      profile.socialLinks = socialLinks || profile.socialLinks;
-      if (avatarIPFSHash) profile.avatarIPFSHash = avatarIPFSHash;
-      if (coverIPFSHash) profile.coverIPFSHash = coverIPFSHash;
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(profileData)
+        .eq('wallet_address', walletAddress)
+        .select()
+        .single();
 
-      await profile.save();
+      if (error) throw error;
+      profile = data;
     } else {
       // Create new profile
-      profile = await Profile.create({
-        walletAddress,
-        username,
-        bio,
-        socialLinks,
-        avatarIPFSHash,
-        coverIPFSHash
-      });
+      profileData.created_at = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert([profileData])
+        .select()
+        .single();
+
+      if (error) throw error;
+      profile = data;
     }
 
     res.json({
       success: true,
       profile: {
-        walletAddress: profile.walletAddress,
+        walletAddress: profile.wallet_address,
         username: profile.username,
         bio: profile.bio,
-        socialLinks: profile.socialLinks,
-        avatarUrl: avatarIPFSHash ? `https://gateway.pinata.cloud/ipfs/${avatarIPFSHash}` : null,
-        coverUrl: coverIPFSHash ? `https://gateway.pinata.cloud/ipfs/${coverIPFSHash}` : null,
-        createdAt: profile.createdAt,
-        updatedAt: profile.updatedAt
+        socialLinks: profile.social_links,
+        avatarUrl: profile.avatar_ipfs_hash ? `https://gateway.pinata.cloud/ipfs/${profile.avatar_ipfs_hash}` : null,
+        coverUrl: profile.cover_ipfs_hash ? `https://gateway.pinata.cloud/ipfs/${profile.cover_ipfs_hash}` : null,
+        createdAt: profile.created_at,
+        updatedAt: profile.updated_at
       }
     });
   } catch (error) {
@@ -76,9 +96,13 @@ const getProfile = async (req, res) => {
   try {
     const { address } = req.params;
     
-    const profile = await Profile.findOne({ 
-      walletAddress: address.toLowerCase() 
-    });
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select()
+      .eq('wallet_address', address.toLowerCase())
+      .single();
+
+    if (error) throw error;
 
     if (!profile) {
       return res.status(404).json({ error: 'Profile not found' });
@@ -87,14 +111,14 @@ const getProfile = async (req, res) => {
     res.json({
       success: true,
       profile: {
-        walletAddress: profile.walletAddress,
+        walletAddress: profile.wallet_address,
         username: profile.username,
         bio: profile.bio,
-        socialLinks: profile.socialLinks,
-        avatarUrl: profile.avatarIPFSHash ? `https://gateway.pinata.cloud/ipfs/${profile.avatarIPFSHash}` : null,
-        coverUrl: profile.coverIPFSHash ? `https://gateway.pinata.cloud/ipfs/${profile.coverIPFSHash}` : null,
-        createdAt: profile.createdAt,
-        updatedAt: profile.updatedAt
+        socialLinks: profile.social_links,
+        avatarUrl: profile.avatar_ipfs_hash ? `https://gateway.pinata.cloud/ipfs/${profile.avatar_ipfs_hash}` : null,
+        coverUrl: profile.cover_ipfs_hash ? `https://gateway.pinata.cloud/ipfs/${profile.cover_ipfs_hash}` : null,
+        createdAt: profile.created_at,
+        updatedAt: profile.updated_at
       }
     });
   } catch (error) {
@@ -108,11 +132,19 @@ const checkUsername = async (req, res) => {
   try {
     const { username } = req.params;
     
-    const exists = await Profile.findOne({ username });
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('username', username)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 is the "no rows" error
+      throw error;
+    }
     
     res.json({
       success: true,
-      available: !exists
+      available: !data
     });
   } catch (error) {
     console.error('Username check error:', error);
