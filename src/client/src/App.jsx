@@ -16,12 +16,39 @@ const Feed = () => (
   </div>
 );
 
+// Profile check wrapper
+const ProfileCheckRoute = ({ element: Element }) => {
+  const { walletAddress, hasProfile, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+      </div>
+    );
+  }
+
+  if (!walletAddress) {
+    return <Navigate to="/connect" replace />;
+  }
+
+  if (walletAddress && !hasProfile) {
+    return <Navigate to="/create-profile" replace />;
+  }
+
+  return <Element />;
+};
+
 // Home component with auth-aware rendering
 const Home = () => {
-  const { walletAddress } = useAuth();
+  const { walletAddress, hasProfile } = useAuth();
 
   if (walletAddress) {
-    return <Navigate to="/feed" replace />;
+    if (hasProfile) {
+      return <Navigate to="/feed" replace />;
+    } else {
+      return <Navigate to="/create-profile" replace />;
+    }
   }
 
   return (
@@ -56,11 +83,7 @@ const App = () => {
               />
               <Route
                 path="/feed"
-                element={
-                  <PrivateRoute>
-                    <Feed />
-                  </PrivateRoute>
-                }
+                element={<ProfileCheckRoute element={Feed} />}
               />
             </Routes>
           </main>
