@@ -36,11 +36,24 @@
             border: 1px solid #d6d8db;
             color: #383d41;
         }
+        #debugInfo {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
     <h1>IPFS Upload Test</h1>
-    <form id="uploadForm">
+    
+    <div id="debugInfo">
+        <p><strong>Debug Info:</strong></p>
+        <p>Current URL: <span id="currentUrl"></span></p>
+    </div>
+
+    <form id="uploadForm" enctype="multipart/form-data">
         <div class="form-group">
             <label for="file">Select a file to upload:</label><br>
             <input type="file" id="file" name="file" required>
@@ -50,12 +63,18 @@
     <div id="response"></div>
 
     <script>
+        // Display current URL
+        document.getElementById('currentUrl').textContent = window.location.href;
+
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const responseDiv = document.getElementById('response');
             const fileInput = document.getElementById('file');
             const file = fileInput.files[0];
+
+            responseDiv.className = 'loading';
+            responseDiv.textContent = 'Starting upload process...';
 
             // Basic validation
             if (!file) {
@@ -64,23 +83,28 @@
                 return;
             }
 
-            // Show loading state
-            responseDiv.className = 'loading';
-            responseDiv.textContent = 'Uploading...';
+            // Update status
+            responseDiv.textContent = 'Creating FormData...';
 
             const formData = new FormData();
             formData.append('file', file);
 
             try {
-                console.log('Sending upload request for file:', file.name);
+                responseDiv.textContent = 'Sending request...';
+
                 const response = await fetch('/test-upload', {
                     method: 'POST',
                     body: formData
                 });
 
-                console.log('Response status:', response.status);
+                responseDiv.textContent = `Got response with status: ${response.status}`;
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
                 const result = await response.json();
-                console.log('Response data:', result);
+                console.log('Server response:', result);
 
                 if (result.success) {
                     responseDiv.className = 'success';
@@ -98,12 +122,9 @@ URL: <a href="${result.url}" target="_blank">${result.url}</a>`;
             } catch (error) {
                 console.error('Upload error:', error);
                 responseDiv.className = 'error';
-                responseDiv.textContent = `Error: ${error.message}`;
-                
-                // Add detailed error info if available
-                if (error.details) {
-                    responseDiv.textContent += `\n\nDetails: ${error.details}`;
-                }
+                responseDiv.innerHTML = `Error: ${error.message}
+
+Please check the browser console for more details.`;
             }
         });
     </script>

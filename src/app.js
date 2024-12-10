@@ -14,24 +14,15 @@ const { uploadToIPFS } = require('./config/ipfs');
 
 const app = express();
 
-// Middleware
-app.use(helmet());
-app.use(morgan('dev'));
+// Enable full request logging
+morgan.token('body', (req) => JSON.stringify(req.body));
+morgan.token('files', (req) => req.files ? JSON.stringify(req.files) : 'no files');
+app.use(morgan(':method :url :status :body :files - :response-time ms'));
+
+// Basic middleware
+app.use(cors());
 app.use(express.json());
-
-// Session configuration
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { 
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
-}));
-
-// Initialize Avalanche network connection
-setupAvalancheNetwork();
+app.use(express.urlencoded({ extended: true }));
 
 // Configure multer for test uploads
 const storage = multer.memoryStorage();
@@ -42,15 +33,27 @@ const upload = multer({
   }
 });
 
+// Initialize Avalanche network connection
+setupAvalancheNetwork();
+
 // Test upload endpoint (no auth required)
 app.post('/test-upload', upload.single('file'), async (req, res) => {
+  console.log('Received upload request:', {
+    body: req.body,
+    file: req.file,
+    headers: req.headers
+  });
+
   try {
-    console.log('Test upload received:', req.file);
-    
     if (!req.file) {
-      return res.status(400).json({ error: 'No file provided' });
+      console.log('No file in request');
+      return res.status(400).json({ 
+        success: false,
+        error: 'No file provided' 
+      });
     }
 
+    console.log('Processing file:', req.file.originalname);
     const result = await uploadToIPFS(req.file);
     console.log('IPFS upload result:', result);
 
@@ -60,8 +63,9 @@ app.post('/test-upload', upload.single('file'), async (req, res) => {
       url: result.url
     });
   } catch (error) {
-    console.error('Test upload error:', error);
+    console.error('Upload error:', error);
     res.status(500).json({ 
+      success: false,
       error: 'Failed to upload file to IPFS',
       details: error.message 
     });
@@ -77,58 +81,30 @@ app.get('/test-upload', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api', routes);
 
-// Serve static files from the React app
+// Serve static files
 app.use(express.static(path.join(__dirname, 'client/build')));
 app.use(express.static(path.join(__dirname, 'client/public')));
 
-// The "catch-all" handler: for any request that doesn't
-// match one of the above, send back React's index.html file.
+// The "catch-all" handler
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  console.error('Global error handler:', err);
+  res.status(500).json({ 
+    success: false,
+    error: 'Something went wrong!',
+    details: err.message
+  });
 });
 
-// Find an available port
-const findAvailablePort = (startPort) => {
-  return new Promise((resolve, reject) => {
-    const server = require('http').createServer();
-    
-    server.listen(startPort, () => {
-      const { port } = server.address();
-      server.close(() => resolve(port));
-    });
-
-    server.on('error', (err) => {
-      if (err.code === 'EADDRINUSE') {
-        resolve(findAvailablePort(startPort + 1));
-      } else {
-        reject(err);
-      }
-    });
-  });
-};
-
-// Start server with port fallback
-const startServer = async () => {
-  try {
-    const startPort = process.env.PORT || 3334;
-    const port = await findAvailablePort(startPort);
-    
-    app.listen(port, () => {
-      console.log(`Server running on port ${port}`);
-      console.log(`Test upload page available at: http://localhost:${port}/test-upload`);
-    });
-  } catch (err) {
-    console.error('Failed to start server:', err);
-    process.exit(1);
-  }
-};
-
-startServer();
+// Start server
+const PORT = process.env.PORT || 3334;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Test upload page available at: http://localhost:${PORT}/test-upload`);
+});
 
 module.exports = app;
