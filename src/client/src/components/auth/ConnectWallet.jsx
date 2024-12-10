@@ -10,12 +10,12 @@ const ConnectWallet = () => {
 
   const connectWallet = async () => {
     try {
+      setIsConnecting(true);
+      
       if (!window.ethereum) {
-        window.alert('Please install MetaMask');
-        return;
+        throw new Error('Please install MetaMask');
       }
 
-      // Request account access
       const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
       });
@@ -23,19 +23,9 @@ const ConnectWallet = () => {
       const address = accounts[0];
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-
-      // Sign the message
       const message = `Sign this message to authenticate with Rever\nAddress: ${address}\nTimestamp: ${Date.now()}`;
       const signature = await signer.signMessage(message);
 
-      // Show what we're sending to backend
-      window.alert('Sending to backend:\n' + JSON.stringify({
-        address,
-        signature,
-        message
-      }, null, 2));
-
-      // Send to backend
       const response = await fetch('/api/auth/verify-signature', {
         method: 'POST',
         headers: {
@@ -48,29 +38,17 @@ const ConnectWallet = () => {
         })
       });
 
-      // Show raw response
-      const rawResponse = await response.text();
-      window.alert('Raw backend response:\n' + rawResponse);
-
-      // Parse response
-      const data = JSON.parse(rawResponse);
-      window.alert('Parsed response:\n' + JSON.stringify(data, null, 2));
-
+      const data = await response.json();
       if (!data.success) {
         throw new Error(data.error || 'Failed to verify wallet');
       }
 
-      // Update auth context
-      window.alert('Updating auth state with:\nhasProfile: ' + data.hasProfile);
-      updateAuthState(data.address, data.hasProfile);
-
-      // Navigate
-      const destination = data.hasProfile ? '/feed' : '/create-profile';
-      window.alert('About to navigate to: ' + destination);
-      navigate(destination);
+      updateAuthState(data.address, false);
+      navigate('/create-profile');
 
     } catch (err) {
-      window.alert('Error: ' + err.message);
+      setIsConnecting(false);
+      throw err;
     }
   };
 
