@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
+import { useAuth } from '../../context/AuthContext';
 
 const AVALANCHE_TESTNET_PARAMS = {
   chainId: '0xA869',
@@ -16,6 +17,7 @@ const AVALANCHE_TESTNET_PARAMS = {
 
 const ConnectWallet = () => {
   const navigate = useNavigate();
+  const { updateAuthState } = useAuth();
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
@@ -102,7 +104,10 @@ const ConnectWallet = () => {
 
       setStatus('Connection successful!');
       
-      // Check if user has a profile
+      // Update auth context with the new state
+      updateAuthState(data.address, data.hasProfile);
+      
+      // Navigate based on profile status
       if (data.hasProfile) {
         navigate('/feed');
       } else {
