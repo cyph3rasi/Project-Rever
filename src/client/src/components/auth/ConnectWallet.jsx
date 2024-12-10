@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { useAuth } from '../../context/AuthContext';
 
 const ConnectWallet = () => {
-  const navigate = useNavigate();
   const { updateAuthState } = useAuth();
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState('');
@@ -46,7 +44,6 @@ const ConnectWallet = () => {
       }
 
       updateAuthState(address);
-      navigate('/create-profile', { replace: true });
 
     } catch (err) {
       setError(err.message);
