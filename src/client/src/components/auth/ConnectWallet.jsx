@@ -45,8 +45,8 @@ const ConnectWallet = () => {
         throw new Error(data.error || 'Failed to verify wallet');
       }
 
-      updateAuthState(address, false);
-      navigate('/create-profile');
+      updateAuthState(address);
+      navigate('/create-profile', { replace: true });
 
     } catch (err) {
       setError(err.message);
