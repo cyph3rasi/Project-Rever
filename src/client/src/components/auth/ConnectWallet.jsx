@@ -1,60 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { useAuth } from '../../context/AuthContext';
-
-const AVALANCHE_TESTNET_PARAMS = {
-  chainId: '0xA869',
-  chainName: 'Avalanche Testnet C-Chain',
-  nativeCurrency: {
-    name: 'Avalanche',
-    symbol: 'AVAX',
-    decimals: 18
-  },
-  rpcUrls: ['https://api.avax-test.network/ext/bc/C/rpc'],
-  blockExplorerUrls: ['https://testnet.snowtrace.io/']
-};
 
 const ConnectWallet = () => {
   const navigate = useNavigate();
   const { updateAuthState } = useAuth();
   const [isConnecting, setIsConnecting] = useState(false);
-  const [error, setError] = useState('');
-  const [status, setStatus] = useState('');
-
-  // Force an error to show in the UI for debugging
-  useEffect(() => {
-    alert('ConnectWallet component mounted');
-    window.onerror = function(msg, url, lineNo, columnNo, error) {
-      alert('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo);
-      return false;
-    };
-  }, []);
 
   const connectWallet = async () => {
     try {
-      alert('Starting wallet connection...');
-      setIsConnecting(true);
-      setError('');
-
       if (!window.ethereum) {
-        throw new Error('Please install MetaMask to continue');
+        window.alert('Please install MetaMask');
+        return;
       }
 
+      // Request account access
       const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
       });
 
       const address = accounts[0];
-      alert('Got address: ' + address);
-
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
 
-      const message = `Sign this message to verify your wallet ownership\nTimestamp: ${Date.now()}`;
+      // Sign the message
+      const message = `Sign this message to authenticate with Rever\nAddress: ${address}\nTimestamp: ${Date.now()}`;
       const signature = await signer.signMessage(message);
 
-      alert('About to verify signature with backend');
+      // Show what we're sending to backend
+      window.alert('Sending to backend:\n' + JSON.stringify({
+        address,
+        signature,
+        message
+      }, null, 2));
+
+      // Send to backend
       const response = await fetch('/api/auth/verify-signature', {
         method: 'POST',
         headers: {
@@ -67,35 +48,29 @@ const ConnectWallet = () => {
         })
       });
 
-      const data = await response.json();
-      alert('Backend response: ' + JSON.stringify(data));
+      // Show raw response
+      const rawResponse = await response.text();
+      window.alert('Raw backend response:\n' + rawResponse);
+
+      // Parse response
+      const data = JSON.parse(rawResponse);
+      window.alert('Parsed response:\n' + JSON.stringify(data, null, 2));
 
       if (!data.success) {
         throw new Error(data.error || 'Failed to verify wallet');
       }
 
-      // Force error if hasProfile is undefined
-      if (typeof data.hasProfile === 'undefined') {
-        throw new Error('hasProfile is undefined in response');
-      }
-
-      // Update auth context state
+      // Update auth context
+      window.alert('Updating auth state with:\nhasProfile: ' + data.hasProfile);
       updateAuthState(data.address, data.hasProfile);
-      
-      alert('About to navigate. hasProfile: ' + data.hasProfile);
-      
-      // Navigate based on profile status
-      if (data.hasProfile) {
-        navigate('/feed');
-      } else {
-        navigate('/create-profile');
-      }
+
+      // Navigate
+      const destination = data.hasProfile ? '/feed' : '/create-profile';
+      window.alert('About to navigate to: ' + destination);
+      navigate(destination);
 
     } catch (err) {
-      alert('Error: ' + err.message);
-      setError(err.message || 'Failed to connect wallet');
-    } finally {
-      setIsConnecting(false);
+      window.alert('Error: ' + err.message);
     }
   };
 
@@ -110,18 +85,6 @@ const ConnectWallet = () => {
       >
         {isConnecting ? 'Connecting...' : 'Connect with MetaMask'}
       </button>
-
-      {status && (
-        <div className="mt-4 p-4 bg-blue-100 text-blue-700 rounded-lg">
-          {status}
-        </div>
-      )}
-
-      {error && (
-        <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-lg">
-          {error}
-        </div>
-      )}
 
       <p className="mt-4 text-sm text-gray-600 text-center">
         Don't have MetaMask? <a href="https://metamask.io" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">Download here</a>
