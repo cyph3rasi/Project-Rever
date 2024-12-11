@@ -1,14 +1,20 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ConnectWallet from './components/auth/ConnectWallet';
+import CreateProfile from './components/profile/CreateProfile';
 
-// Single page app - just wallet connection
 const App = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="py-8">
-        <ConnectWallet />
-      </main>
-    </div>
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        <main className="py-8">
+          <Routes>
+            <Route path="/" element={<ConnectWallet />} />
+            <Route path="/create-profile" element={<CreateProfile />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 };
 
