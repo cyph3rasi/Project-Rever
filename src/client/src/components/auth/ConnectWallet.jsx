@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
-import { useAuth } from '../../context/AuthContext';
 
 const ConnectWallet = () => {
-  const { updateAuthState } = useAuth();
+  const navigate = useNavigate();
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState('');
 
@@ -11,21 +11,28 @@ const ConnectWallet = () => {
     try {
       setIsConnecting(true);
       setError('');
+      window.alert('1. Starting connection...');
       
       if (!window.ethereum) {
         throw new Error('Please install MetaMask');
       }
 
+      window.alert('2. Requesting accounts...');
       const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
       });
 
       const address = accounts[0];
+      window.alert('3. Got address: ' + address);
+
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const message = `Sign this message to authenticate with Rever\nAddress: ${address}\nTimestamp: ${Date.now()}`;
+
+      window.alert('4. Requesting signature...');
       const signature = await signer.signMessage(message);
 
+      window.alert('5. Sending to backend...');
       const response = await fetch('/api/auth/verify-signature', {
         method: 'POST',
         headers: {
@@ -38,14 +45,20 @@ const ConnectWallet = () => {
         })
       });
 
+      window.alert('6. Got backend response...');
       const data = await response.json();
+      window.alert('7. Response data: ' + JSON.stringify(data));
+
       if (!data.success) {
         throw new Error(data.error || 'Failed to verify wallet');
       }
 
-      updateAuthState(address);
+      window.alert('8. About to navigate...');
+      navigate('/create-profile');
+      window.alert('9. Navigation complete!');
 
     } catch (err) {
+      window.alert('Error: ' + err.message);
       setError(err.message);
     } finally {
       setIsConnecting(false);
